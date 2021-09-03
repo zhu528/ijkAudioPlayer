@@ -52,7 +52,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
     /**
      * 播放路径资源存储
      */
-    private final List<SongInfo<Object>> mDataSourceList = new ArrayList<>();
+    private final List<SongInfo> mDataSourceList = new ArrayList<>();
     /**
      * 播放位置存储
      */
@@ -140,7 +140,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
     /**
      * 播放
      */
-    private void prepareAsync(int position, SongInfo<Object> songInfo, boolean isCache) {
+    private void prepareAsync(int position, SongInfo songInfo, boolean isCache) {
 
         if (isCache) {
             try {
@@ -240,7 +240,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
     }
 
     @Override
-    public void startList(List<SongInfo<Object>> pathList, int playPosition, boolean isCache) {
+    public void startList(List<SongInfo> pathList, int playPosition, boolean isCache) {
         isEnableCache = isCache;
         if (pathList == null || pathList.isEmpty()) {
             return;

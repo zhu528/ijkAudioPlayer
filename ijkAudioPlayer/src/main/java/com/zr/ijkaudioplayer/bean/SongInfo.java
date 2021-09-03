@@ -1,8 +1,8 @@
 package com.zr.ijkaudioplayer.bean;
 
-public class SongInfo<T> {
+public class SongInfo {
     String songId;      //音乐id
-    T songUrl;          //音乐播放地址
+    String songUrl;     //音乐播放地址
     String songName;    //音乐标题
     String artist;      //作者
     String songCover;   //音乐封面
@@ -16,11 +16,11 @@ public class SongInfo<T> {
         this.songId = songId;
     }
 
-    public T getSongUrl() {
+    public String getSongUrl() {
         return songUrl;
     }
 
-    public void setSongUrl(T songUrl) {
+    public void setSongUrl(String songUrl) {
         this.songUrl = songUrl;
     }
 

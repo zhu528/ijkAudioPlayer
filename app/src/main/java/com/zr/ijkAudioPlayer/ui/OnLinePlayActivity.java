@@ -27,7 +27,7 @@ import java.util.List;
 
 public class OnLinePlayActivity extends AppCompatActivity implements View.OnClickListener {
     private MyAudioManager audioManager;
-    private final List<SongInfo<Object>> mList = new ArrayList<>();
+    private final List<SongInfo> mList = new ArrayList<>();
     private ImageView pause_btn;
     private ImageView playing_btn;
     private SeekBar audio_seek;
@@ -119,7 +119,7 @@ public class OnLinePlayActivity extends AppCompatActivity implements View.OnClic
 
     private void setList() {
         for (int i = 0; i < 2; i++){
-            SongInfo<Object> songInfo = new SongInfo<>();
+            SongInfo songInfo = new SongInfo();
            if (i == 0){
                songInfo.setSongUrl("http://m701.music.126.net/20210831175458/861842c46de1e8bfd6457399e62a0e22/jdyyaac/obj/w5rDlsOJwrLDjj7CmsOj/5542797965/e423/0961/91a3/efba4ddaaf3e51750b2b8a218cd035ef.m4a");
            } else {

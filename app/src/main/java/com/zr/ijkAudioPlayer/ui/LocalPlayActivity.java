@@ -40,7 +40,7 @@ import java.util.List;
 
 public class LocalPlayActivity<T> extends AppCompatActivity implements View.OnClickListener {
     private LocalListAdapter adapter;
-    private List<SongInfo<Object>> songs;
+    private List<SongInfo> songs;
     private MyAudioManager audioManager;
     private ImageView pause_btn;
     private ImageView playing_btn;
@@ -178,7 +178,7 @@ public class LocalPlayActivity<T> extends AppCompatActivity implements View.OnCl
                 continue;
             }
             Log.d("lws", "音乐path:" + path);
-            SongInfo<Object> song = new SongInfo<>();
+            SongInfo song = new SongInfo();
             song.setSongUrl(path);
             song.setSongName(name);
             song.setDuration(duration);

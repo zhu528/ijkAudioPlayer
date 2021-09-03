@@ -15,10 +15,10 @@ import com.zr.ijkaudioplayer.bean.SongInfo;
 import java.util.List;
 
 public class LocalListAdapter extends RecyclerView.Adapter<LocalListAdapter.ViewHolder> {
-    private final List<SongInfo<Object>> songList;
+    private final List<SongInfo> songList;
     private OnItemClickListener onItemClickListener;
 
-    public LocalListAdapter(List<SongInfo<Object>> songList) {
+    public LocalListAdapter(List<SongInfo> songList) {
         this.songList = songList;
     }
 
@@ -30,7 +30,7 @@ public class LocalListAdapter extends RecyclerView.Adapter<LocalListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        SongInfo<Object> song = songList.get(position);
+        SongInfo song = songList.get(position);
         holder.tvName.setText(song.getSongName());
         holder.tvSize.setText(song.getDuration());
         holder.layout.setOnClickListener(v -> {

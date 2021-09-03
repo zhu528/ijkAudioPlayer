@@ -30,7 +30,7 @@ public abstract class MyAbstractAudioPlayer {
      * 将整个列表添加到播放列表，如果是未播放状态，则播放第一个
      * @param pathList 资源列表
      */
-    public abstract void startList(List<SongInfo<Object>> pathList, int playPosition, boolean isCache);
+    public abstract void startList(List<SongInfo> pathList, int playPosition, boolean isCache);
  
     /**
      * 播放事件监听器
