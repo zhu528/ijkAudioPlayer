@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import tv.danmaku.ijk.media.player.IMediaPlayer;
-import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import com.zr.ijkaudioplayer.tv.danmaku.ijk.media.player.IMediaPlayer;
+import com.zr.ijkaudioplayer.tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /**
  * 集成IjkPlayer音頻播放
