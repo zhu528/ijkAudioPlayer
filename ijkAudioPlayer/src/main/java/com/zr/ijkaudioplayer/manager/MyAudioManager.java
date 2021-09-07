@@ -1,5 +1,6 @@
 package com.zr.ijkaudioplayer.manager;
 
+import android.app.Application;
 import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -20,6 +21,7 @@ import com.zr.ijkaudioplayer.utils.LogUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -29,10 +31,10 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 /**
  * 集成IjkPlayer音頻播放
  * 音频管理类
+ *
  * @author zr
  */
 public class MyAudioManager extends MyAbstractAudioPlayer {
-    private String TAG = "MyAudioManager";
     /**
      * 定时器检测播放进度时间间隔
      */
@@ -41,9 +43,8 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
      * 最大连续播放错误数
      */
     private static final int MAX_CONTINUE_ERROR_NUM = 3;
- 
+
     private IjkMediaPlayer mMediaPlayer;
-    private final Context mContext;
     private final Context appContext;
     /**
      * 播放错误次数，连续三次错误，则不进行下一次播放了
@@ -65,6 +66,10 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
      * 是否单曲循环
      */
     private boolean mSingleLooping = false;
+    /**
+     * 是否随机播放
+     */
+    private boolean mRandomPlaying = false;
     /**
      * 缓存百分比
      */
@@ -103,24 +108,29 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
      * 用于发送是否在缓冲的消息Handler
      */
     private final Handler mBufferHandler = new Handler(Looper.getMainLooper());
- 
+
     /**
      * 当前播放器状态
-     * */
+     */
     private AudioPlayEnum mPlayerStatus = AudioPlayEnum.PLAYER_FREE;
     private AudioPlayerListener mAudioPlayerEvent;
 
     /*
-    * 是否开启缓存
-    */
+     * 是否开启缓存
+     */
     private boolean isEnableCache;
+    /*
+     * 缓存路径
+     */
+    private String mPlayPath;
 
-    public MyAudioManager(Context context) {
-        mContext = context;
-        appContext = context.getApplicationContext();
+    private SongInfo nowPlayingSongInfo;
+
+    public MyAudioManager(Application application) {
+        appContext = application.getApplicationContext();
         initPlayer();
     }
- 
+
     private void initPlayer() {
         //初始化
         mMediaPlayer = new IjkMediaPlayer();
@@ -131,75 +141,82 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
         mMediaPlayer.setOnInfoListener(onInfoListener);
         mMediaPlayer.setOnBufferingUpdateListener(onBufferingUpdateListener);
         mMediaPlayer.setOnPreparedListener(onPreparedListener);
+
         //来电监听
-        mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        mTelephonyManager = (TelephonyManager) appContext.getSystemService(Context.TELEPHONY_SERVICE);
         myPhoneStateListener = new MyPhoneStateListener(this);
         mTelephonyManager.listen(myPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
- 
+
+
     /**
      * 播放
      */
     private void prepareAsync(int position, SongInfo songInfo, boolean isCache) {
-
+        nowPlayingSongInfo = songInfo;
         if (isCache) {
             try {
-                mMediaPlayer.reset();
-                sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
-                mCacheServer = AudioCacheManager.getProxy(appContext);
-                String path = (String) songInfo.getSongUrl();
-                AudioCacheManager.getInstance(appContext).registerCacheListener(path, (file, s, i) -> {
-                    mBufferedPercent = i;
-                    if (mAudioPlayerEvent != null) {
-                        mAudioPlayerEvent.onBufferingUpdate(mBufferedPercent);
+                mPlayPath = songInfo.getSongPlay_Url();
+                if (!TextUtils.isEmpty(mPlayPath)) {
+                    mMediaPlayer.reset();
+                    sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
+                    mCacheServer = AudioCacheManager.getProxy(appContext);
+
+                    AudioCacheManager.getInstance(appContext).registerCacheListener(mPlayPath, (file, s, i) -> {
+                        mBufferedPercent = i;
+                        if (mAudioPlayerEvent != null) {
+                            mAudioPlayerEvent.onBufferingUpdate(mBufferedPercent);
+                        }
+                    });
+                    String proxyPath = AudioCacheManager.getInstance(appContext).getProxyUrl(mPlayPath);
+                    if (mCacheServer.isCached(mPlayPath)
+                            || proxyPath.startsWith("file://")
+                            || proxyPath.startsWith(appContext.getFilesDir().getPath())) {
+                        mBufferedPercent = 100;
+                        if (mAudioPlayerEvent != null) {
+                            sendBufferingHandler(true, false);
+                        }
+                        //不要在这里发进度，上层调用不到duration，设置不了max
+                    } else {
+                        mBufferedPercent = 0;
+                        if (mAudioPlayerEvent != null) {
+                            sendBufferingHandler(false, true);
+                        }
                     }
-                });
-                String proxyPath = AudioCacheManager.getInstance(appContext).getProxyUrl(path);
-                if (mCacheServer.isCached(path)
-                        || proxyPath.startsWith("file://")
-                        || proxyPath.startsWith(mContext.getFilesDir().getPath())) {
-                    mBufferedPercent = 100;
-                    if (mAudioPlayerEvent != null) {
-                        sendBufferingHandler(true, false);
-                    }
-                    //不要在这里发进度，上层调用不到duration，设置不了max
+                    LogUtils.d("播放");
+                    mMediaPlayer.setDataSource(proxyPath);
+                    mMediaPlayer.prepareAsync();
+                    currPlayPotion = position;
                 } else {
-                    mBufferedPercent = 0;
-                    if (mAudioPlayerEvent != null) {
-                        sendBufferingHandler(false, true);
-                    }
+                    LogUtils.d("url为空");
+                    currPlayPotion = position;
+                    sendPlayerStatus(AudioPlayEnum.PLAYER_NONE);
                 }
-                mMediaPlayer.setDataSource(proxyPath);
-                mMediaPlayer.prepareAsync();
-                currPlayPotion = position;
             } catch (Exception e) {
                 e.printStackTrace();
+                LogUtils.d("播放错误");
                 onErrorPlay();
             }
         } else {
-            Object path = songInfo.getSongUrl();
-            Uri uri;
-            String newPath;
-            try {
-                mMediaPlayer.reset();
-                sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
-                if (path instanceof Uri){
-                    uri = (Uri) path;
-                    LogUtils.d(TAG + "uri: " + uri);
-                    mMediaPlayer.setDataSource(mContext, uri);
-                } else {
-                    newPath = (String) path;
-                    LogUtils.d(TAG + "newPath: " + newPath);
+            String newPath = songInfo.getSongPlay_Url();
+            if (!TextUtils.isEmpty(newPath)){
+                try {
+                    mMediaPlayer.reset();
+                    sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
                     mMediaPlayer.setDataSource(newPath);
+                    mMediaPlayer.prepareAsync();
+                    currPlayPotion = position;
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                mMediaPlayer.prepareAsync();
+            } else {
+                LogUtils.d("url为空");
                 currPlayPotion = position;
-            } catch (IOException e) {
-                e.printStackTrace();
+                sendPlayerStatus(AudioPlayEnum.PLAYER_NONE);
             }
         }
     }
- 
+
     @Override
     public void reStart() {
         if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
@@ -210,10 +227,10 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             }
         }
     }
- 
+
     @Override
     public void start(String path) {
-        if(!TextUtils.isEmpty(path)){
+        if (!TextUtils.isEmpty(path)) {
             try {
                 mMediaPlayer.reset();
                 sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
@@ -227,11 +244,11 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
 
     @Override
     public void startUri(Uri uri) {
-        if(uri != null){
+        if (uri != null) {
             try {
                 mMediaPlayer.reset();
                 sendPlayerStatus(AudioPlayEnum.PLAYER_PREPARING);
-                mMediaPlayer.setDataSource(mContext, uri);
+                mMediaPlayer.setDataSource(appContext, uri);
                 mMediaPlayer.prepareAsync();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -247,18 +264,18 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
         }
         mDataSourceList.clear();
         mDataSourceList.addAll(pathList);
-        if (playPosition != 0){
-            prepareAsync(playPosition, mDataSourceList.get(playPosition), isEnableCache);
+        if (playPosition != 0) {
+            prepareAsync(playPosition, mDataSourceList.get(playPosition), isCache);
         } else {
-            prepareAsync(0, mDataSourceList.get(0), isEnableCache);
+            prepareAsync(0, mDataSourceList.get(0), isCache);
         }
     }
- 
+
     @Override
     public void setAudioPlayerListener(AudioPlayerListener event) {
         this.mAudioPlayerEvent = event;
     }
- 
+
     @Override
     public void pause() {
         try {
@@ -280,18 +297,24 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
     }
 
     @Override
-    public void stopCacheAndShutdown(String path) {
-        LogUtils.d("path: " + path);
-        if (mCacheServer != null && !TextUtils.isEmpty(path)) {
-            mCacheServer.stopCacheAndShutdown(path);
+    public void stopCacheAndShutdown() {
+        if (mCacheServer != null && !TextUtils.isEmpty(mPlayPath)) {
+            LogUtils.d("暂停缓存");
+            mCacheServer.stopCacheAndShutdown(mPlayPath);
         }
     }
- 
+
+
+    public SongInfo getNowPlayingSongInfo() {
+        return nowPlayingSongInfo;
+    }
+
     @Override
     public void nextPlay() {
         if (mDataSourceList.isEmpty()) {
             return;
         }
+        pause();
         if (currPlayPotion < 0) {
             prepareAsync(0, mDataSourceList.get(0), isEnableCache);
         } else {
@@ -304,7 +327,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             }
         }
     }
- 
+
     @Override
     public void prevPlay() {
         if (mDataSourceList.isEmpty() || currPlayPotion < 0) {
@@ -318,7 +341,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             prepareAsync(currPlayPotion - 1, mDataSourceList.get(currPlayPotion - 1), isEnableCache);
         }
     }
- 
+
     @Override
     public boolean isPlaying() {
         if (mMediaPlayer != null) {
@@ -327,11 +350,18 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
         return false;
     }
 
+    /**
+     * 获取当前播放位置
+     */
+    public int getCurrPlayPotion() {
+        return currPlayPotion;
+    }
+
     @Override
     public AudioPlayEnum getPlayerStatus() {
         return mPlayerStatus;
     }
- 
+
     @Override
     public void seekTo(long time) {
         try {
@@ -348,17 +378,18 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             e.printStackTrace();
         }
     }
- 
+
     @Override
     public void seekStart() {
         mSeekTouch = true;
     }
- 
+
     @Override
     public void release() {
         mTelephonyManager.listen(myPhoneStateListener, PhoneStateListener.LISTEN_NONE);
         mBufferHandler.removeCallbacksAndMessages(null);
         if (mCacheServer != null) {
+            //根据AndroidVideoCache官方提示后台出现Socket closed错误是正常的;
             AudioCacheManager.getInstance(appContext).unregisterCacheListener();
             mCacheServer.shutdown();
         }
@@ -369,32 +400,49 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             mMediaPlayer.release();
         }
     }
- 
+
+
     @Override
     public long getCurrentPosition() {
         return mMediaPlayer.getCurrentPosition();
     }
- 
+
     @Override
     public long getDuration() {
         return mMediaPlayer.getDuration();
     }
- 
+
     @Override
     public int getBufferedPercentage() {
         return mBufferedPercent;
     }
- 
+
     @Override
     public void setListLooping(boolean isLooping) {
         mListLooping = isLooping;
     }
- 
+
     @Override
     public void setSingleLooping(boolean isLooping) {
         mSingleLooping = isLooping;
     }
- 
+
+    public void setRandomPlaying(boolean mRandomPlaying) {
+        this.mRandomPlaying = mRandomPlaying;
+    }
+
+    public boolean ismListLooping() {
+        return mListLooping;
+    }
+
+    public boolean ismSingleLooping() {
+        return mSingleLooping;
+    }
+
+    public boolean ismRandomPlaying() {
+        return mRandomPlaying;
+    }
+
     /**
      * 销毁Timer
      */
@@ -404,7 +452,7 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             mProgressTimer = null;
         }
     }
- 
+
     /**
      * 错误时，自动播放下一首
      */
@@ -419,10 +467,15 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             } else if (mListLooping || mDataSourceList.size() < currPlayPotion + 1) {
                 //列表循环
                 nextPlay();
+            } else if (mRandomPlaying){
+                Random random = new Random();
+                int randomPlayNum = random.nextInt(mDataSourceList.size());
+                //单曲循环
+                prepareAsync(currPlayPotion, mDataSourceList.get(randomPlayNum), isEnableCache);
             }
         }
     }
- 
+
     /**
      * 延时发送是否在缓冲的状态，防止假缓冲
      */
@@ -431,17 +484,17 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
             mAudioPlayerEvent.onBuffering(isBuffering);
         }
     }
- 
+
     /**
      * 设置当前播放状态
      */
-    private void sendPlayerStatus(AudioPlayEnum mStatus){
+    private void sendPlayerStatus(AudioPlayEnum mStatus) {
         mPlayerStatus = mStatus;
-        if(mAudioPlayerEvent != null){
-            mAudioPlayerEvent.onStatusChange(mPlayerStatus,currPlayPotion);
+        if (mAudioPlayerEvent != null && currPlayPotion >= 0) {
+            mAudioPlayerEvent.onStatusChange(mPlayerStatus, currPlayPotion);
         }
     }
- 
+
     /**
      * 定时器检测播放进度
      */
@@ -493,18 +546,18 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
         };
         mProgressTimer.schedule(mProgressTask, 0);
     }
- 
+
     private final IMediaPlayer.OnErrorListener onErrorListener = (iMediaPlayer, frameworkErr, implErr) -> {
         sendBufferingHandler(true, false);
         onErrorPlay();
-        LogUtils.e(frameworkErr + "==>chenpin error " + implErr);
+        LogUtils.e(frameworkErr + "==> error " + implErr);
         return true;
     };
     private final IMediaPlayer.OnInfoListener onInfoListener = (iMediaPlayer, what, extra) -> true;
- 
+
     private final IMediaPlayer.OnBufferingUpdateListener onBufferingUpdateListener = (iMediaPlayer, percent) -> {
     };
- 
+
     private final IMediaPlayer.OnPreparedListener onPreparedListener = new IMediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(IMediaPlayer iMediaPlayer) {
@@ -539,8 +592,12 @@ public class MyAudioManager extends MyAbstractAudioPlayer {
                     //列表循环
                     nextPlay();
                 }
- 
+
             }
         }
     };
+
+    public List<SongInfo> getDataSourceList() {
+        return mDataSourceList;
+    }
 }

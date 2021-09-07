@@ -47,10 +47,9 @@ public abstract class MyAbstractAudioPlayer {
 
     /**
      * 暂停缓存
-     * @param path 路径
      */
-    public abstract void stopCacheAndShutdown(String path);
- 
+    public abstract void stopCacheAndShutdown();
+
     /**
      * 下一首
      */
