@@ -39,7 +39,7 @@ public class OnLinePlayActivity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.com_on_line_player_activity);
 
-        audioManager = new MyAudioManager(this);
+        audioManager = new MyAudioManager(getApplication());
 
 
         setList();
@@ -121,9 +121,9 @@ public class OnLinePlayActivity extends AppCompatActivity implements View.OnClic
         for (int i = 0; i < 2; i++){
             SongInfo songInfo = new SongInfo();
            if (i == 0){
-               songInfo.setSongUrl("http://m701.music.126.net/20210831175458/861842c46de1e8bfd6457399e62a0e22/jdyyaac/obj/w5rDlsOJwrLDjj7CmsOj/5542797965/e423/0961/91a3/efba4ddaaf3e51750b2b8a218cd035ef.m4a");
+               songInfo.setSongPlay_Url("http://m701.music.126.net/20210831175458/861842c46de1e8bfd6457399e62a0e22/jdyyaac/obj/w5rDlsOJwrLDjj7CmsOj/5542797965/e423/0961/91a3/efba4ddaaf3e51750b2b8a218cd035ef.m4a");
            } else {
-               songInfo.setSongUrl("http://m801.music.126.net/20210831175736/be1aed65030239cda423ffd3781fc47e/jdyyaac/obj/w5rDlsOJwrLDjj7CmsOj/9385607807/cbbd/04c5/f017/5a7f2f722df72ce12b5b348d9277b9f4.m4a");
+               songInfo.setSongPlay_Url("http://m801.music.126.net/20210831175736/be1aed65030239cda423ffd3781fc47e/jdyyaac/obj/w5rDlsOJwrLDjj7CmsOj/9385607807/cbbd/04c5/f017/5a7f2f722df72ce12b5b348d9277b9f4.m4a");
            }
             mList.add(songInfo);
         }

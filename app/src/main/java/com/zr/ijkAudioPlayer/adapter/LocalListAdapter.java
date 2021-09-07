@@ -31,7 +31,7 @@ public class LocalListAdapter extends RecyclerView.Adapter<LocalListAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SongInfo song = songList.get(position);
-        holder.tvName.setText(song.getSongName());
+        holder.tvName.setText(song.getSong_Name());
         holder.tvSize.setText(song.getDuration());
         holder.layout.setOnClickListener(v -> {
             if (onItemClickListener != null){

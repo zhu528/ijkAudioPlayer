@@ -82,7 +82,7 @@ public class LocalPlayActivity<T> extends AppCompatActivity implements View.OnCl
                 });
 
 
-        audioManager = new MyAudioManager(this);
+        audioManager = new MyAudioManager(getApplication());
         adapter.setOnItemClickListener(position -> {
             audioManager.startList(songs, position, false);
             pause_btn.setVisibility(View.VISIBLE);
@@ -179,8 +179,8 @@ public class LocalPlayActivity<T> extends AppCompatActivity implements View.OnCl
             }
             Log.d("lws", "音乐path:" + path);
             SongInfo song = new SongInfo();
-            song.setSongUrl(path);
-            song.setSongName(name);
+            song.setSongPlay_Url(path);
+            song.setSong_Name(name);
             song.setDuration(duration);
             songs.add(song);
         }
