@@ -12,5 +12,7 @@ public enum AudioPlayEnum {
     /**播放暂停*/
     PLAYER_PAUSE,
     /**播放错误*/
-    PLAYER_ERROR
+    PLAYER_ERROR,
+    /**播放路径为空*/
+    PLAYER_NONE
 }
