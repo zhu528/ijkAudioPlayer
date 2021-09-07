@@ -1,35 +1,44 @@
 package com.zr.ijkaudioplayer.bean;
 
 public class SongInfo {
-    String songId;      //音乐id
-    String songUrl;     //音乐播放地址
-    String songName;    //音乐标题
-    String artist;      //作者
-    String songCover;   //音乐封面
-    String duration;    //音乐长度
+    String song_Id;             //音乐id
+    String songPlay_Url;        //音乐播放url和path
+    String songPlay_Uri;        //音乐播放uri
+    String song_Name;           //音乐标题
+    String artist;              //作者
+    String song_Cover;          //音乐封面
+    String duration;            //音乐长度
 
-    public String getSongId() {
-        return songId;
+    public String getSong_Id() {
+        return song_Id;
     }
 
-    public void setSongId(String songId) {
-        this.songId = songId;
+    public void setSong_Id(String song_Id) {
+        this.song_Id = song_Id;
     }
 
-    public String getSongUrl() {
-        return songUrl;
+    public String getSongPlay_Url() {
+        return songPlay_Url;
     }
 
-    public void setSongUrl(String songUrl) {
-        this.songUrl = songUrl;
+    public void setSongPlay_Url(String songPlay_Url) {
+        this.songPlay_Url = songPlay_Url;
     }
 
-    public String getSongName() {
-        return songName;
+    public String getSongPlay_Uri() {
+        return songPlay_Uri;
     }
 
-    public void setSongName(String songName) {
-        this.songName = songName;
+    public void setSongPlay_Uri(String songPlay_Uri) {
+        this.songPlay_Uri = songPlay_Uri;
+    }
+
+    public String getSong_Name() {
+        return song_Name;
+    }
+
+    public void setSong_Name(String song_Name) {
+        this.song_Name = song_Name;
     }
 
     public String getArtist() {
@@ -40,12 +49,12 @@ public class SongInfo {
         this.artist = artist;
     }
 
-    public String getSongCover() {
-        return songCover;
+    public String getSong_Cover() {
+        return song_Cover;
     }
 
-    public void setSongCover(String songCover) {
-        this.songCover = songCover;
+    public void setSong_Cover(String song_Cover) {
+        this.song_Cover = song_Cover;
     }
 
     public String getDuration() {
@@ -59,11 +68,12 @@ public class SongInfo {
     @Override
     public String toString() {
         return "SongInfo{" +
-                "songId='" + songId + '\'' +
-                ", songUrl='" + songUrl + '\'' +
-                ", songName='" + songName + '\'' +
+                "song_Id='" + song_Id + '\'' +
+                ", songPlay_Url='" + songPlay_Url + '\'' +
+                ", songPlay_Uri='" + songPlay_Uri + '\'' +
+                ", song_Name='" + song_Name + '\'' +
                 ", artist='" + artist + '\'' +
-                ", songCover='" + songCover + '\'' +
+                ", song_Cover='" + song_Cover + '\'' +
                 ", duration='" + duration + '\'' +
                 '}';
     }
